@@ -1,5 +1,9 @@
 alias ls='ls -GFh'
  
+ # Python aliases
+alias aenv='. venv/bin/activate' #actiavtes virtualenv in venv folder
+alias denv='deactivate' #deactivates env
+
 # Git aliases
  
 alias gif='git fetch' # Fetch from a repo
