@@ -109,8 +109,6 @@ alias dc-restart='dc restart'
 
 alias gap='git add --patch'
 
-alias dc-web-attach='docker attach persona-web_web_1'
-
 alias gfr='git fetch && git rebase master --autostash'
 
 alias dcd='dc down'
@@ -132,18 +130,8 @@ function deletepruned() {
 alias ls="exa"
 alias cat="bat"
 
-# browse all commits in deploy
-alias deploy-log="git log ...origin/production --no-merges"
-
-# cat out all authors in the deploy - use to ping everyone for signoff
-alias deploy-authors="deploy-log --format=\"%an\" | sort | uniq | awk '{print \"@\"\$0}'"
-
-# cat out all sorted commit headers
-alias deploy-subjects="deploy-log --format=\"%an %s\" | sort | uniq"
-
 alias k=kubectl
 alias gr="git restore"
-alias gcp="p commit"
 function rebase_master() {
     # Get the current branch name
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -181,9 +169,6 @@ export PATH="/opt/homebrew/opt/openssl@3/bin:$PATH"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-export PATH="/Users/arushshankar/Development/persona-cli/bin:$PATH"
-
-
 USE_GKE_GCLOUD_AUTH_PLUGIN=True
 . /opt/homebrew/opt/asdf/libexec/asdf.sh
 alias grs=git restore --staged .
@@ -195,14 +180,12 @@ if [ -f '/Users/arushshankar/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . 
 if [ -f '/Users/arushshankar/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/arushshankar/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
 . /opt/homebrew/opt/asdf/libexec/asdf.sh
-alias prs='p rspec'
-alias prb='p rubocop'
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 export BAT_THEME="Dracula"
 alias gsw='git switch'
 
 
-alias ghprc='gh pr create -a @me --fill-verbose --label business-identity-solutions --label auto-assign-reviewers'
+alias ghprc='gh pr create -a @me --fill-verbose'
 
 alias ghd='gh dash'
 
@@ -213,10 +196,6 @@ export PATH="/opt/homebrew/opt/mysql@8.4/bin:$PATH"
 
 # export BUILDKITE_API_TOKEN="your-buildkite-token-here"
 
-alias worktreeshell='p worktree compose run --no-deps --rm web /bin/bash'
-
-alias worktreelogs='p worktree compose logs -f web'
-
 fix_lfs() {
 git rm --cached -r .
 git reset --hard
@@ -224,11 +203,9 @@ git rm .gitattributes
 git reset .
 git checkout .
 }
-alias wtl='worktreelogs'
 
 # export GITHUB_API_KEY="your-github-api-key-here"
 
-alias wts='worktreeshell'
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 alias claude="/Users/arushshankar/.claude/local/claude"
