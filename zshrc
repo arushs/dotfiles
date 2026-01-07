@@ -127,8 +127,20 @@ function deletepruned() {
   git branch --merged "$mainbranch" | grep -v "* $mainbranch" | xargs -n 1 git branch -d
 }
 
-alias ls="exa"
-alias cat="bat"
+# Modern CLI tool aliases (only if installed)
+# Prefer eza (maintained fork) over exa (deprecated)
+if command -v eza &> /dev/null; then
+    alias ls='eza'
+elif command -v exa &> /dev/null; then
+    alias ls='exa'
+fi
+
+# bat as cat replacement (on Debian/Ubuntu it may be installed as batcat)
+if command -v bat &> /dev/null; then
+    alias cat='bat'
+elif command -v batcat &> /dev/null; then
+    alias cat='batcat'
+fi
 
 alias k=kubectl
 alias gr="git restore"

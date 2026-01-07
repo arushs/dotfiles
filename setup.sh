@@ -194,6 +194,75 @@ install_powerlevel10k() {
     echo -e "${GREEN}powerlevel10k installed successfully!${NC}"
 }
 
+# Install common CLI tools (eza, bat)
+install_cli_tools() {
+    echo -e "${BLUE}Installing common CLI tools (eza, bat)...${NC}"
+
+    if [[ "$OS" == "macOS" ]]; then
+        # macOS: use Homebrew
+        if ! command_exists eza; then
+            echo -e "${BLUE}Installing eza via Homebrew...${NC}"
+            brew install eza
+        else
+            echo -e "${GREEN}eza is already installed.${NC}"
+        fi
+
+        if ! command_exists bat; then
+            echo -e "${BLUE}Installing bat via Homebrew...${NC}"
+            brew install bat
+        else
+            echo -e "${GREEN}bat is already installed.${NC}"
+        fi
+
+    elif [[ "$OS" == "Linux" ]]; then
+        # Linux: try apt first, fall back to cargo if needed
+        sudo apt-get update
+
+        # Install eza (the maintained fork of exa)
+        if ! command_exists eza; then
+            # Check if eza is available in apt
+            if apt-cache show eza &>/dev/null; then
+                echo -e "${BLUE}Installing eza via apt...${NC}"
+                sudo apt-get install -y eza
+            else
+                echo -e "${YELLOW}eza not available in apt. Attempting install via cargo...${NC}"
+                if command_exists cargo; then
+                    cargo install eza
+                else
+                    echo -e "${YELLOW}cargo not found. Installing rust toolchain...${NC}"
+                    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+                    source "$HOME/.cargo/env"
+                    cargo install eza
+                fi
+            fi
+        else
+            echo -e "${GREEN}eza is already installed.${NC}"
+        fi
+
+        # Install bat
+        if ! command_exists bat && ! command_exists batcat; then
+            if apt-cache show bat &>/dev/null; then
+                echo -e "${BLUE}Installing bat via apt...${NC}"
+                sudo apt-get install -y bat
+            else
+                echo -e "${YELLOW}bat not available in apt. Attempting install via cargo...${NC}"
+                if command_exists cargo; then
+                    cargo install bat
+                else
+                    echo -e "${YELLOW}cargo not found. Installing rust toolchain...${NC}"
+                    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+                    source "$HOME/.cargo/env"
+                    cargo install bat
+                fi
+            fi
+        else
+            echo -e "${GREEN}bat is already installed.${NC}"
+        fi
+    fi
+
+    echo -e "${GREEN}CLI tools installation complete!${NC}"
+}
+
 # Install zsh-syntax-highlighting
 install_zsh_syntax_highlighting() {
     # Check if installed via package manager
@@ -254,6 +323,7 @@ install_dependencies() {
     # Only install powerlevel10k after oh-my-zsh is confirmed installed
     install_powerlevel10k
     install_zsh_syntax_highlighting
+    install_cli_tools
 
     echo ""
     echo -e "${GREEN}All dependencies installed successfully!${NC}"
