@@ -58,6 +58,159 @@ create_symlink() {
     ln -s "$source" "$target"
 }
 
+# Check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Install Homebrew on macOS if not installed
+install_homebrew() {
+    if ! command_exists brew; then
+        echo -e "${YELLOW}Homebrew is not installed.${NC}"
+        read -p "Would you like to install Homebrew? (y/n): " install_brew
+        if [[ "$install_brew" =~ ^[Yy]$ ]]; then
+            echo -e "${BLUE}Installing Homebrew...${NC}"
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            # Add Homebrew to PATH for this session
+            if [[ -f /opt/homebrew/bin/brew ]]; then
+                eval "$(/opt/homebrew/bin/brew shellenv)"
+            elif [[ -f /usr/local/bin/brew ]]; then
+                eval "$(/usr/local/bin/brew shellenv)"
+            fi
+            echo -e "${GREEN}Homebrew installed successfully!${NC}"
+        else
+            echo -e "${RED}Homebrew is required for macOS package installation. Skipping dependency installation.${NC}"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# Install zsh
+install_zsh() {
+    if command_exists zsh; then
+        echo -e "${GREEN}zsh is already installed.${NC}"
+        return 0
+    fi
+
+    echo -e "${BLUE}Installing zsh...${NC}"
+    if [[ "$OS" == "Linux" ]]; then
+        sudo apt-get update
+        sudo apt-get install -y zsh
+    elif [[ "$OS" == "macOS" ]]; then
+        brew install zsh
+    fi
+    echo -e "${GREEN}zsh installed successfully!${NC}"
+}
+
+# Install git and curl (Linux only, usually pre-installed on macOS)
+install_git_curl() {
+    if [[ "$OS" == "Linux" ]]; then
+        echo -e "${BLUE}Installing git and curl...${NC}"
+        sudo apt-get update
+        sudo apt-get install -y git curl
+        echo -e "${GREEN}git and curl installed successfully!${NC}"
+    fi
+}
+
+# Set zsh as default shell
+set_default_shell() {
+    local zsh_path
+    zsh_path=$(which zsh)
+
+    if [[ "$SHELL" == *"zsh"* ]]; then
+        echo -e "${GREEN}zsh is already the default shell.${NC}"
+        return 0
+    fi
+
+    echo -e "${BLUE}Setting zsh as default shell...${NC}"
+
+    # Add zsh to /etc/shells if not already there
+    if ! grep -q "$zsh_path" /etc/shells; then
+        echo -e "${YELLOW}Adding $zsh_path to /etc/shells...${NC}"
+        echo "$zsh_path" | sudo tee -a /etc/shells
+    fi
+
+    chsh -s "$zsh_path"
+    echo -e "${GREEN}zsh set as default shell. You'll need to log out and back in for this to take effect.${NC}"
+}
+
+# Install oh-my-zsh
+install_oh_my_zsh() {
+    if [[ -d "$HOME/.oh-my-zsh" ]]; then
+        echo -e "${GREEN}oh-my-zsh is already installed.${NC}"
+        return 0
+    fi
+
+    echo -e "${BLUE}Installing oh-my-zsh...${NC}"
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    echo -e "${GREEN}oh-my-zsh installed successfully!${NC}"
+}
+
+# Install powerlevel10k theme
+install_powerlevel10k() {
+    local p10k_dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+
+    if [[ -d "$p10k_dir" ]]; then
+        echo -e "${GREEN}powerlevel10k is already installed.${NC}"
+        return 0
+    fi
+
+    echo -e "${BLUE}Installing powerlevel10k theme...${NC}"
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$p10k_dir"
+    echo -e "${GREEN}powerlevel10k installed successfully!${NC}"
+}
+
+# Install zsh-syntax-highlighting
+install_zsh_syntax_highlighting() {
+    # Check if installed via package manager
+    if [[ "$OS" == "macOS" ]]; then
+        if brew list zsh-syntax-highlighting &>/dev/null; then
+            echo -e "${GREEN}zsh-syntax-highlighting is already installed via Homebrew.${NC}"
+            return 0
+        fi
+        echo -e "${BLUE}Installing zsh-syntax-highlighting via Homebrew...${NC}"
+        brew install zsh-syntax-highlighting
+    elif [[ "$OS" == "Linux" ]]; then
+        local zsh_highlight_dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+        if [[ -d "$zsh_highlight_dir" ]]; then
+            echo -e "${GREEN}zsh-syntax-highlighting is already installed.${NC}"
+            return 0
+        fi
+        echo -e "${BLUE}Installing zsh-syntax-highlighting as oh-my-zsh plugin...${NC}"
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$zsh_highlight_dir"
+    fi
+    echo -e "${GREEN}zsh-syntax-highlighting installed successfully!${NC}"
+}
+
+# Install all dependencies
+install_dependencies() {
+    echo -e "${BLUE}========================================${NC}"
+    echo -e "${BLUE}     Installing Dependencies           ${NC}"
+    echo -e "${BLUE}========================================${NC}"
+    echo ""
+
+    if [[ "$OS" == "macOS" ]]; then
+        if ! install_homebrew; then
+            return 1
+        fi
+    fi
+
+    if [[ "$OS" == "Linux" ]]; then
+        install_git_curl
+    fi
+
+    install_zsh
+    set_default_shell
+    install_oh_my_zsh
+    install_powerlevel10k
+    install_zsh_syntax_highlighting
+
+    echo ""
+    echo -e "${GREEN}All dependencies installed successfully!${NC}"
+    echo ""
+}
+
 # Main setup
 main() {
     echo -e "${BLUE}========================================${NC}"
@@ -66,6 +219,23 @@ main() {
     echo ""
 
     detect_os
+    echo ""
+
+    if [[ "$OS" == "Unknown" ]]; then
+        echo -e "${RED}Unsupported operating system. Exiting.${NC}"
+        exit 1
+    fi
+
+    # Ask about installing dependencies
+    echo -e "${YELLOW}Would you like to install dependencies (zsh, oh-my-zsh, powerlevel10k, zsh-syntax-highlighting)?${NC}"
+    read -p "Install dependencies? (y/n): " install_deps
+    echo ""
+
+    if [[ "$install_deps" =~ ^[Yy]$ ]]; then
+        install_dependencies
+    else
+        echo -e "${YELLOW}Skipping dependency installation.${NC}"
+    fi
     echo ""
 
     echo -e "${BLUE}Dotfiles directory: ${DOTFILES_DIR}${NC}"
@@ -99,7 +269,7 @@ main() {
     echo -e "${GREEN}Setup complete!${NC}"
     echo -e "${BLUE}========================================${NC}"
     echo ""
-    echo -e "${YELLOW}Note: You may need to restart your shell or run 'source ~/.zshrc' for changes to take effect.${NC}"
+    echo -e "${YELLOW}IMPORTANT: Please restart your shell or run 'zsh' to apply changes.${NC}"
     echo ""
     echo -e "${YELLOW}If you have sensitive credentials (API keys, tokens), add them to a separate file like ~/.zshrc.local and source it from ~/.zshrc${NC}"
 }

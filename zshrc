@@ -8,8 +8,8 @@ fi
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/arushshankar/.oh-my-zsh"
-  export PATH="$PATH:/Users/arushshankar/.local/bin"
+export ZSH="$HOME/.oh-my-zsh"
+export PATH="$PATH:$HOME/.local/bin"
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
@@ -165,21 +165,39 @@ function rebase_master() {
 
 
 alias rbm="rebase_master"
-export PATH="/opt/homebrew/opt/openssl@3/bin:$PATH"
+# Cross-platform PATH additions (source only if they exist)
+# macOS Apple Silicon
+[ -d "/opt/homebrew/opt/openssl@3/bin" ] && export PATH="/opt/homebrew/opt/openssl@3/bin:$PATH"
+# macOS Intel
+[ -d "/usr/local/opt/openssl@3/bin" ] && export PATH="/usr/local/opt/openssl@3/bin:$PATH"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-USE_GKE_GCLOUD_AUTH_PLUGIN=True
-. /opt/homebrew/opt/asdf/libexec/asdf.sh
-alias grs=git restore --staged .
+export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/arushshankar/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/arushshankar/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+# ASDF version manager (cross-platform)
+# macOS Apple Silicon (Homebrew)
+[ -f /opt/homebrew/opt/asdf/libexec/asdf.sh ] && . /opt/homebrew/opt/asdf/libexec/asdf.sh
+# macOS Intel (Homebrew)
+[ -f /usr/local/opt/asdf/libexec/asdf.sh ] && . /usr/local/opt/asdf/libexec/asdf.sh
+# Linux (git install)
+[ -f "$HOME/.asdf/asdf.sh" ] && . "$HOME/.asdf/asdf.sh"
+alias grs='git restore --staged .'
+
+# The next line updates PATH for the Google Cloud SDK (cross-platform).
+# Check common locations for gcloud SDK
+if [ -f "$HOME/Downloads/google-cloud-sdk/path.zsh.inc" ]; then
+  . "$HOME/Downloads/google-cloud-sdk/path.zsh.inc"
+elif [ -f "$HOME/google-cloud-sdk/path.zsh.inc" ]; then
+  . "$HOME/google-cloud-sdk/path.zsh.inc"
+fi
 
 # The next line enables shell command completion for gcloud.
-if [ -f '/Users/arushshankar/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/arushshankar/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
-
-. /opt/homebrew/opt/asdf/libexec/asdf.sh
+if [ -f "$HOME/Downloads/google-cloud-sdk/completion.zsh.inc" ]; then
+  . "$HOME/Downloads/google-cloud-sdk/completion.zsh.inc"
+elif [ -f "$HOME/google-cloud-sdk/completion.zsh.inc" ]; then
+  . "$HOME/google-cloud-sdk/completion.zsh.inc"
+fi
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 export BAT_THEME="Dracula"
 alias gsw='git switch'
@@ -189,7 +207,9 @@ alias ghprc='gh pr create -a @me --fill-verbose'
 
 alias ghd='gh dash'
 
-export PATH="/opt/homebrew/opt/mysql@8.4/bin:$PATH"
+# MySQL (cross-platform)
+[ -d "/opt/homebrew/opt/mysql@8.4/bin" ] && export PATH="/opt/homebrew/opt/mysql@8.4/bin:$PATH"
+[ -d "/usr/local/opt/mysql@8.4/bin" ] && export PATH="/usr/local/opt/mysql@8.4/bin:$PATH"
 
 # SENSITIVE CREDENTIALS - Set these in a separate local file or environment
 # export JFROG_KEY="your-jfrog-key-here"
@@ -206,13 +226,25 @@ git checkout .
 
 # export GITHUB_API_KEY="your-github-api-key-here"
 
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# zsh-syntax-highlighting (cross-platform)
+# macOS Apple Silicon (Homebrew)
+[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# macOS Intel (Homebrew)
+[ -f /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# Linux (apt-get install)
+[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# Linux (oh-my-zsh plugin)
+[ -f "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && source "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
-alias claude="/Users/arushshankar/.claude/local/claude"
+# Claude CLI
+[ -f "$HOME/.claude/local/claude" ] && alias claude="$HOME/.claude/local/claude"
 
 # bun completions
-[ -s "/Users/arushshankar/.bun/_bun" ] && source "/Users/arushshankar/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
+[ -d "$BUN_INSTALL/bin" ] && export PATH="$BUN_INSTALL/bin:$PATH"
+
+# Source local overrides if they exist (for machine-specific settings)
+[ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
