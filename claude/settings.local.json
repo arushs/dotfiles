@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(git push:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(gh repo fork:*)",
+      "Bash(gh api:*)",
+      "Bash(gh pr create:*)",
+      "Bash(dig:*)",
+      "Bash(nslookup:*)",
+      "Bash(whois:*)",
+      "WebSearch",
+      "Bash(xargs -I {} sh -c 'if [ -d \"\"\"\"{}/.git\"\"\"\" ]; then echo \"\"\"\"Found git repo: {}\"\"\"\"; cd \"\"\"\"{}\"\"\"\" && git config --get remote.origin.url; fi')",
+      "Bash(find:*)",
+      "Bash(while read dir)",
+      "Bash(do if [ -d $dir/.git ])",
+      "Bash(then echo '=== $\\(basename $dir\\) ===')",
+      "Bash(git -C $dir config --get remote.origin.url)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(gh repo clone:*)"
+    ]
+  }
+}
