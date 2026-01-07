@@ -137,18 +137,48 @@ set_default_shell() {
 
 # Install oh-my-zsh
 install_oh_my_zsh() {
-    if [[ -d "$HOME/.oh-my-zsh" ]]; then
+    local omz_dir="$HOME/.oh-my-zsh"
+    local omz_script="$omz_dir/oh-my-zsh.sh"
+
+    # Check if oh-my-zsh is already properly installed (directory exists AND main script exists)
+    if [[ -d "$omz_dir" ]] && [[ -f "$omz_script" ]]; then
         echo -e "${GREEN}oh-my-zsh is already installed.${NC}"
         return 0
     fi
 
+    # If directory exists but main script doesn't, remove the broken installation
+    if [[ -d "$omz_dir" ]] && [[ ! -f "$omz_script" ]]; then
+        echo -e "${YELLOW}Found incomplete oh-my-zsh installation. Removing and reinstalling...${NC}"
+        rm -rf "$omz_dir"
+    fi
+
     echo -e "${BLUE}Installing oh-my-zsh...${NC}"
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+    # Use unattended install to avoid prompts
+    if ! sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended; then
+        echo -e "${RED}ERROR: oh-my-zsh installation command failed!${NC}"
+        return 1
+    fi
+
+    # Verify the installation succeeded by checking for the main script
+    if [[ ! -f "$omz_script" ]]; then
+        echo -e "${RED}ERROR: oh-my-zsh installation failed - $omz_script not found!${NC}"
+        echo -e "${RED}Please check your internet connection and try again.${NC}"
+        return 1
+    fi
+
     echo -e "${GREEN}oh-my-zsh installed successfully!${NC}"
+    return 0
 }
 
 # Install powerlevel10k theme
 install_powerlevel10k() {
+    # Verify oh-my-zsh is installed before proceeding
+    if [[ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]]; then
+        echo -e "${RED}ERROR: oh-my-zsh is not installed. Cannot install powerlevel10k theme.${NC}"
+        return 1
+    fi
+
     local p10k_dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 
     if [[ -d "$p10k_dir" ]]; then
@@ -157,7 +187,10 @@ install_powerlevel10k() {
     fi
 
     echo -e "${BLUE}Installing powerlevel10k theme...${NC}"
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$p10k_dir"
+    if ! git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$p10k_dir"; then
+        echo -e "${RED}ERROR: Failed to clone powerlevel10k repository.${NC}"
+        return 1
+    fi
     echo -e "${GREEN}powerlevel10k installed successfully!${NC}"
 }
 
@@ -172,13 +205,22 @@ install_zsh_syntax_highlighting() {
         echo -e "${BLUE}Installing zsh-syntax-highlighting via Homebrew...${NC}"
         brew install zsh-syntax-highlighting
     elif [[ "$OS" == "Linux" ]]; then
+        # Verify oh-my-zsh is installed before proceeding (needed for plugin directory)
+        if [[ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]]; then
+            echo -e "${RED}ERROR: oh-my-zsh is not installed. Cannot install zsh-syntax-highlighting as plugin.${NC}"
+            return 1
+        fi
+
         local zsh_highlight_dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
         if [[ -d "$zsh_highlight_dir" ]]; then
             echo -e "${GREEN}zsh-syntax-highlighting is already installed.${NC}"
             return 0
         fi
         echo -e "${BLUE}Installing zsh-syntax-highlighting as oh-my-zsh plugin...${NC}"
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$zsh_highlight_dir"
+        if ! git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$zsh_highlight_dir"; then
+            echo -e "${RED}ERROR: Failed to clone zsh-syntax-highlighting repository.${NC}"
+            return 1
+        fi
     fi
     echo -e "${GREEN}zsh-syntax-highlighting installed successfully!${NC}"
 }
@@ -202,7 +244,14 @@ install_dependencies() {
 
     install_zsh
     set_default_shell
-    install_oh_my_zsh
+
+    # Install oh-my-zsh and verify it succeeded before continuing
+    if ! install_oh_my_zsh; then
+        echo -e "${RED}ERROR: oh-my-zsh installation failed. Cannot continue with theme and plugin installation.${NC}"
+        return 1
+    fi
+
+    # Only install powerlevel10k after oh-my-zsh is confirmed installed
     install_powerlevel10k
     install_zsh_syntax_highlighting
 
