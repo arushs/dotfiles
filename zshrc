@@ -223,10 +223,10 @@ alias ghd='gh dash'
 [ -d "/opt/homebrew/opt/mysql@8.4/bin" ] && export PATH="/opt/homebrew/opt/mysql@8.4/bin:$PATH"
 [ -d "/usr/local/opt/mysql@8.4/bin" ] && export PATH="/usr/local/opt/mysql@8.4/bin:$PATH"
 
-# SENSITIVE CREDENTIALS - Set these in a separate local file or environment
-# export JFROG_KEY="your-jfrog-key-here"
-
-# export BUILDKITE_API_TOKEN="your-buildkite-token-here"
+# API Keys and Tokens (set these locally, not in dotfiles)
+# export JFROG_KEY="your-jfrog-key"
+# export BUILDKITE_API_TOKEN="your-buildkite-token"
+# export GITHUB_API_KEY="your-github-api-key"
 
 fix_lfs() {
 git rm --cached -r .
@@ -235,8 +235,6 @@ git rm .gitattributes
 git reset .
 git checkout .
 }
-
-# export GITHUB_API_KEY="your-github-api-key-here"
 
 # zsh-syntax-highlighting (cross-platform)
 # macOS Apple Silicon (Homebrew)
