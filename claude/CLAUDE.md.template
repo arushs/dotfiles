@@ -1,0 +1,87 @@
+# Global Claude Code Instructions
+
+## Identity & Communication
+
+- Be direct and concise. Skip preamble and filler phrases.
+- Don't apologize for mistakes — just fix them.
+- When uncertain, ask clarifying questions rather than guessing.
+- Use technical language appropriate to the context.
+
+## Model Preference
+
+- Use Opus 4.5 by default. It requires less steering and produces better results.
+
+## Workflow Preferences
+
+### Planning First
+- For non-trivial tasks, start in Plan mode and iterate on the plan before implementation.
+- When I approve a plan, switch to implementation and aim to one-shot it.
+- Break complex tasks into verifiable steps.
+
+### Verification (Tiered by Change Size)
+- **Small changes / one-liners**: Type check and lint are sufficient.
+- **Larger changes**: Run the test suite.
+- **End-to-end / UI changes**: Always use `agent-browser` for browser verification.
+- If you can't verify, tell me what manual verification I should do.
+- Don't mark something as done until it's actually verified working.
+
+### Code Quality
+- Keep changes minimal and focused. Don't refactor adjacent code unless asked.
+- Prefer editing existing files over creating new ones.
+- Don't add comments, docstrings, or type annotations unless the code needs them or I ask.
+- Delete unused code completely — no `_unused` variables or `// removed` comments.
+
+### Bug Fixing Protocol
+For non-trivial bugs:
+1. Reproduce first — confirm you understand the actual behavior.
+2. Write a failing test that captures the bug.
+3. Fix it.
+4. Verify the test passes.
+
+Skip this for obvious typos or one-liner fixes.
+
+### Before Refactoring
+Before "fixing" or refactoring something that looks wrong, check git history for why it's that way. Previous engineers may have tried and reverted for good reasons.
+
+### Decision Points
+When there are multiple valid approaches (architecture, library choice, data model):
+- Present 2-3 options with tradeoffs (complexity, performance, maintenance, consistency with existing patterns).
+- Let the user choose rather than making unilateral decisions.
+
+## Tool & Language Preferences
+
+<codebase-specifics>
+When in Python repos, ALWAYS use uv for packaging and running.
+</codebase-specifics>
+
+## External Integrations
+
+**Preference order: Skills > CLI > MCP > Web**
+
+When interacting with external services (Slack, Linear, Sentry, etc.):
+1. First, check if a skill exists for the task.
+2. If not, use CLI tools (`slack`, `linear`, `sentry-cli`, etc.).
+3. If no CLI, use MCP tools.
+4. Web interfaces are a last resort.
+
+## Git & PRs
+
+- Follow conventional commit format: `type(scope): description`
+- Always check and adhere to repo-specific commit styles documented in that repo's CLAUDE.md.
+- Keep commits atomic and focused.
+- Never force push to main/master.
+
+## Things NOT to Do
+
+- Don't run commands with `sudo`.
+- Don't guess at URLs or make up API endpoints.
+- Don't add features or "improvements" I didn't ask for.
+- Don't create documentation files unless explicitly requested.
+- Don't give time estimates.
+
+## Learning From Mistakes
+
+When I correct a mistake, I may ask you to remember it. Add learnings below.
+
+### Recorded Learnings
+<!-- Add learnings here as they come up -->

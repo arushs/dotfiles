@@ -372,10 +372,29 @@ main() {
 
     # Create symlinks for Claude configs
     echo -e "${BLUE}Setting up Claude configuration...${NC}"
-    create_symlink "${DOTFILES_DIR}/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+    # Copy CLAUDE.md from template (not symlinked to avoid global gitignore issues)
+    if [[ -f "${DOTFILES_DIR}/claude/CLAUDE.md.template" ]]; then
+        backup_file "$HOME/.claude/CLAUDE.md"
+        echo -e "${GREEN}Copying CLAUDE.md from template${NC}"
+        cp "${DOTFILES_DIR}/claude/CLAUDE.md.template" "$HOME/.claude/CLAUDE.md"
+    fi
     create_symlink "${DOTFILES_DIR}/claude/settings.json" "$HOME/.claude/settings.json"
     create_symlink "${DOTFILES_DIR}/claude/settings.local.json" "$HOME/.claude/settings.local.json"
     create_symlink "${DOTFILES_DIR}/claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
+    echo ""
+
+    # Sync Claude commands (skills)
+    echo -e "${BLUE}Setting up Claude commands/skills...${NC}"
+    if [[ -d "${DOTFILES_DIR}/claude/commands" ]]; then
+        mkdir -p "$HOME/.claude/commands"
+        for cmd_file in "${DOTFILES_DIR}/claude/commands"/*.md; do
+            if [[ -f "$cmd_file" ]]; then
+                local filename=$(basename "$cmd_file")
+                create_symlink "$cmd_file" "$HOME/.claude/commands/$filename"
+            fi
+        done
+        echo -e "${GREEN}Claude commands synced!${NC}"
+    fi
     echo ""
 
     # Make statusline-command.sh executable
