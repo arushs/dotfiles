@@ -43,6 +43,11 @@ create_symlink() {
     local source="$1"
     local target="$2"
 
+    if [ ! -e "$source" ]; then
+        echo -e "${RED}ERROR: Source file does not exist: ${source}${NC}"
+        return 1
+    fi
+
     # Create parent directory if it doesn't exist
     local target_dir="$(dirname "$target")"
     if [ ! -d "$target_dir" ]; then
@@ -61,6 +66,33 @@ create_symlink() {
 # Check if a command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
+}
+
+# Get the user's configured login shell instead of trusting the current session.
+get_login_shell() {
+    local login_shell
+
+    if [[ "$OS" == "macOS" ]] && command_exists dscl; then
+        login_shell=$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')
+        if [[ -n "$login_shell" ]]; then
+            echo "$login_shell"
+            return 0
+        fi
+    fi
+
+    if [[ "$OS" == "macOS" ]] && command_exists id; then
+        login_shell=$(id -P 2>/dev/null | awk -F: '{print $10}')
+        if [[ -n "$login_shell" ]]; then
+            echo "$login_shell"
+            return 0
+        fi
+    fi
+
+    if command_exists getent; then
+        getent passwd "$USER" | cut -d: -f7
+    else
+        awk -F: -v user="$USER" '$1 == user {print $7}' /etc/passwd
+    fi
 }
 
 # Install Homebrew on macOS if not installed
@@ -116,17 +148,20 @@ install_git_curl() {
 # Set zsh as default shell
 set_default_shell() {
     local zsh_path
-    zsh_path=$(which zsh)
+    zsh_path=$(command -v zsh)
+    local login_shell
+    login_shell=$(get_login_shell)
 
-    if [[ "$SHELL" == *"zsh"* ]]; then
+    if [[ "$login_shell" == "$zsh_path" ]]; then
         echo -e "${GREEN}zsh is already the default shell.${NC}"
         return 0
     fi
 
     echo -e "${BLUE}Setting zsh as default shell...${NC}"
+    echo -e "${BLUE}Current login shell: ${login_shell:-unknown}${NC}"
 
     # Add zsh to /etc/shells if not already there
-    if ! grep -q "$zsh_path" /etc/shells; then
+    if ! grep -qx "$zsh_path" /etc/shells; then
         echo -e "${YELLOW}Adding $zsh_path to /etc/shells...${NC}"
         echo "$zsh_path" | sudo tee -a /etc/shells
     fi
@@ -367,7 +402,7 @@ main() {
 
     # Create symlinks for shell config
     echo -e "${BLUE}Setting up shell configuration...${NC}"
-    create_symlink "${DOTFILES_DIR}/zshrc" "$HOME/.zshrc"
+    create_symlink "${DOTFILES_DIR}/.zshrc" "$HOME/.zshrc"
     echo ""
 
     # Create symlinks for Claude configs
